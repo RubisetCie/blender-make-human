@@ -27,28 +27,13 @@ It also exposes a few important functions and objects:
 - get_preference(): Return a preference key from the MPFB preference panel
 - VERSION: A tuple representing the version of MPFB
 - BUILD_INFO: Build information of MPFB. It defaults to "FROM_SOURCE" if not a build, otherwise it contains the build date
-- DEBUG: A boolean indicating whether debug mode is enabled. If DEBUG is True, some early initialization info is printed to the console
 - MPFB_CONTEXTUAL_INFORMATION: A dictionary containing contextual information of the addon, such as in which package it was loaded
 - ClassManager: A singleton object that manages the registration and unregistering of classes such as panels and operators
 """
 
-fake_bl_info = {  # pylint: disable=C0103
-    "name": "mpfb",
-    "author": "Joel Palmius",
-    "version": (2, 0, 13),
-    "blender": (4, 2, 0),
-    "location": "View3D > Properties > MPFB",
-    "description": "Free and open source human character editor",
-    "doc_url": "http://static.makehumancommunity.org/mpfb.html",
-    "tracker_url": "https://github.com/makehumancommunity/mpfb2/issues",
-    "category": "MakeHuman"}
-
 # These are constants that can be imported from submodules
-VERSION = fake_bl_info["version"]
+VERSION = (2, 0, 13)
 BUILD_INFO = "FROM_SOURCE"
-
-# Don't import this log object. Instead, get a local logger via LogService
-_LOG = None
 
 # WARNING!!!
 # Do not try to import anything from anywhere outside of the register method.
@@ -64,9 +49,6 @@ _LOG = None
 
 import bpy, os
 from bpy.utils import register_class
-
-# For printing output before _LOG has been initialized
-DEBUG = False
 
 
 def get_preference(name):
@@ -87,26 +69,14 @@ def get_preference(name):
     Raises:
         ValueError: If the add-on or its preferences are not properly initialized.
     """
-    global DEBUG  # pylint: disable=W0602
-    if DEBUG:
-        print("get_preference(\"" + name + "\")")
     if __package__ in bpy.context.preferences.addons:
         mpfb = bpy.context.preferences.addons[__package__]
         if hasattr(mpfb, "preferences"):
             prefs = mpfb.preferences
             if hasattr(prefs, name):
-                value = getattr(prefs, name)
-                if DEBUG:
-                    print("Found addon preference", (name, value))
-                return value
-            print("There were addon preferences, but key did not exist:", name)
-            print("preferences", dir(prefs))
-            print("hasattr", hasattr(prefs, name))
-            print("name in", name in prefs)
+                return getattr(prefs, name)
             return None
-        print("The '" + __package__ + "' addon does not have any preferences!?")
         raise ValueError("Preferences have not been initialized properly")
-    print("The '" + __package__ + "' addon does not exist!?")
     raise ValueError("I don't seem to exist")
 
 
@@ -120,8 +90,6 @@ MPFB_CONTEXTUAL_INFORMATION = None
 def register():
     """At this point blender is ready enough for it to make sense to
     start initializing python singletons"""
-
-    global _LOG  # pylint: disable=W0603
 
     # To allow other code structures (primarily the unit test code) access to MPFB's logic without knowing
     # anything about the module structure, store info about the package and the location of the root py.
@@ -150,10 +118,6 @@ def register():
         print("WARNING: Could not register preferences class. Maybe it was registered by an earlier version of MPFB?")
 
     from .services import LogService  # This will also cascade import the other services
-    _LOG = LogService.get_logger("mpfb.init")
-    _LOG.info("Build info", "FROM_SOURCE")
-    _LOG.reset_timer()
-
     # ClassManager is a singleton to which all modules can add their
     # Blender classes, preferably when the module is imported the first
     # time. Thus we'll import all packages which can theoretically
@@ -165,24 +129,17 @@ def register():
 
     if not ClassManager.isinitialized():
         classmanager = ClassManager()  # pylint: disable=W0612
-        _LOG.debug("classmanager", classmanager)
 
-    _LOG.debug("About to import mpfb.ui")
     from .ui import UI_DUMMY_VALUE  # pylint: disable=W0612
-
-    _LOG.debug("After imports")
 
     # We can now assume all relevant classes have been added to the
     # class manager singleton.
 
-    _LOG.debug("About to request class registration")
     ClassManager.register_classes()
 
     from .services import SystemService
 
     if SystemService.is_blender_version_at_least():
-        _LOG.debug("About to check if MakeHuman is online")
-
         if bpy.app.online_access:
             # Try to find out where the makehuman user data is at
             from .services import LocationService, SocketService
@@ -190,31 +147,21 @@ def register():
                 mh_user_dir = None
                 try:
                     mh_user_dir = SocketService.get_user_dir()
-                    _LOG.info("Socket service says makeHuman user dir is at", mh_user_dir)
                     if mh_user_dir and os.path.exists(mh_user_dir):
                         mh_user_data = os.path.join(mh_user_dir, "data")
                         LocationService.update_mh_user_data_if_relevant(mh_user_data)
                 except ConnectionRefusedError as err:
-                    _LOG.error("Could not read mh_user_dir. Maybe socket server is down? Error was:", err)
                     mh_user_dir = None
-        else:
-            _LOG.info("Online access preference is not enabled. Not checking if MakeHuman is online.")
 
     from .services import SERVICES
     MPFB_CONTEXTUAL_INFORMATION["SERVICES"] = SERVICES
-
-    _LOG.time("Number of milliseconds to run entire register() method:")
-    _LOG.info("MPFB initialization has finished.")
 
 
 def unregister():
     """Deconstruct all loaded blenderish classes"""
 
-    global _LOG  # pylint: disable=W0603,W0602
-
-    _LOG.debug("About to unregister classes")
     global ClassManager  # pylint: disable=W0603,W0602
     ClassManager.unregister_classes()
 
 
-__all__ = ["VERSION", "DEBUG", "BUILD_INFO", "ClassManager", "MPFB_CONTEXTUAL_INFORMATION"]
+__all__ = ["VERSION", "BUILD_INFO", "ClassManager", "MPFB_CONTEXTUAL_INFORMATION"]

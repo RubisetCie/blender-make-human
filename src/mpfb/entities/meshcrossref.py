@@ -3,9 +3,6 @@
 import numpy, time, mathutils, os
 from ..services import MeshService
 from ..services import ObjectService
-from ..services import LogService
-
-_LOG = LogService.get_logger("entities.meshcrossref")
 
 # Possible calculation TODOs:
 # - Faces by edge
@@ -43,8 +40,6 @@ class MeshCrossRef:
     """
 
     def __init__(self, mesh_object, after_modifiers=True, build_faces_by_group_reference=False, cache_dir=None, write_cache=False, read_cache=False, world_coordinates=True):
-        _LOG.enter()
-
         self._mesh_object = mesh_object
 
         self.cache_dir = cache_dir
@@ -71,33 +66,20 @@ class MeshCrossRef:
         self.vertices_by_face = MeshService.get_faces_as_numpy_array(self._mesh_object)
         self.vertices_by_edge = MeshService.get_edges_as_numpy_array(self._mesh_object)
 
-        before = int(time.time() * 1000.0)
         self.faces_by_vertex = []
         self._build_faces_by_vertex_table()
-        after = int(time.time() * 1000.0)
-        _LOG.debug("Building faces_by_vertex table took", (after - before))
 
-        before = int(time.time() * 1000.0)
         self.edges_by_vertex = []
         self._build_edges_by_vertex_table()
-        after = int(time.time() * 1000.0)
-        _LOG.debug("Building edges_by_vertex table took", (after - before))
 
-        before = int(time.time() * 1000.0)
         self.face_neighbors = []
         self._build_face_neighbors_table()
-        after = int(time.time() * 1000.0)
-        _LOG.debug("Building face_neighbors table took", (after - before))
 
-        before = int(time.time() * 1000.0)
         self.face_median_points = []
         self.face_normals = []
         self.face_median_points_kdtree = None
         self._build_face_median_points_table()
-        after = int(time.time() * 1000.0)
-        _LOG.debug("Building face_median_points and face_normals tables took", (after - before))
 
-        before = int(time.time() * 1000.0)
         self.group_index_to_group_name = []
         self.group_name_to_group_index = dict()
         self.vertices_by_group = []
@@ -106,16 +88,11 @@ class MeshCrossRef:
         self.vertices_with_multiple_groups = []
         self.face_median_points_by_group_kdtrees = []
         self._build_vert_group_references(build_faces_by_group_reference=build_faces_by_group_reference)
-        after = int(time.time() * 1000.0)
-        _LOG.debug("Building vert_group_references took", (after - before))
 
         if build_faces_by_group_reference:
-            before = int(time.time() * 1000.0)
             self.faces_by_group = []
             self._build_faces_by_group_table()
             self._build_faces_by_group_kdtrees()
-            after = int(time.time() * 1000.0)
-            _LOG.debug("Building faces_by_group took", (after - before))
 
         if after_modifiers:
             ObjectService.delete_object(self._mesh_object)
@@ -123,28 +100,21 @@ class MeshCrossRef:
         self._mesh_object = None
 
     def read_array_from_cache(self, cache_file_name):
-        _LOG.enter()
         if not self.cache_dir or not self.read_cache:
-            _LOG.trace("Cache directory or read_cache is not set")
             return None
         if not os.path.exists(self.cache_dir):
-            _LOG.trace("Cache dir does not exist", self.cache_dir)
             return None
 
         absolute_file_path = os.path.abspath(os.path.join(self.cache_dir, cache_file_name))
 
         if not os.path.exists(absolute_file_path):
-            _LOG.trace("Cache file does not exist", absolute_file_path)
             return None
 
         cached_array = numpy.load(absolute_file_path)
-        _LOG.debug("Loaded cached array from", (absolute_file_path, type(cached_array)))
         return cached_array
 
     def write_array_to_cache(self, cache_file_name, numpy_array):
-        _LOG.enter()
         if not self.cache_dir or not self.write_cache:
-            _LOG.trace("Cache directory or write_cache is not set")
             return
         if not os.path.exists(self.cache_dir):
             os.makedirs(self.cache_dir)
@@ -152,15 +122,11 @@ class MeshCrossRef:
         absolute_file_path = os.path.abspath(os.path.join(self.cache_dir, cache_file_name))
 
         if os.path.exists(absolute_file_path):
-            _LOG.debug("Removing stale cache file", absolute_file_path)
             os.remove(absolute_file_path)
 
         numpy.save(absolute_file_path, numpy_array)
 
-        _LOG.debug("Wrote cache file", (absolute_file_path, type(numpy_array)))
-
     def _build_faces_by_group_kdtrees(self):
-        _LOG.enter()
         for group_index in range(len(self.group_index_to_group_name)):
             relevant_faces = self.faces_by_group[group_index]
             kd = mathutils.kdtree.KDTree(len(self.vertices_by_face))
@@ -171,7 +137,6 @@ class MeshCrossRef:
             self.face_median_points_by_group_kdtrees.append(kd)
 
     def _build_vert_group_references(self, build_faces_by_group_reference=False):
-        _LOG.enter()
         vert_by_group = []
         vertices_without_group = []
         vertices_with_multiple_groups = []
@@ -199,12 +164,10 @@ class MeshCrossRef:
         if able_to_read_from_cache:
             for fn in required_cache_files:
                 if not os.path.exists(os.path.join(self.cache_dir, fn)):
-                    _LOG.debug("Cannot read from cache since at least one of the required cache files does not exist", fn)
                     able_to_read_from_cache = False
                     break
 
         if able_to_read_from_cache:
-            _LOG.debug("All cache files exist, and reading from cache is enabled")
             self.vertices_without_group = self.read_array_from_cache(WITHOUT_FILE)
             self.vertices_with_multiple_groups = self.read_array_from_cache(MULTIPLE_FILE)
             for group_idx in range(len(self._mesh_object.vertex_groups)):
@@ -218,7 +181,6 @@ class MeshCrossRef:
                     vertex_found_at_2d = numpy.argwhere(self.vertices_by_face == vertex.index) # Returns 2d array where col 1 is face number and 2 is position in face
                     if len(vertex_found_at_2d) > 0:
                         vertex_found_at = vertex_found_at_2d[:,0] # Extract col 1, ie the face number
-                        _LOG.trace("Vertex, faces", (vertex.index, vertex_found_at, list(vertex_found_at)))
                         self._potential_faces_by_group[group.group].extend(list(vertex_found_at))
             if len(vertex.groups) < 1:
                 vertices_without_group.append(vertex.index)
@@ -238,7 +200,6 @@ class MeshCrossRef:
 
 
     def _build_faces_by_group_table(self):
-        _LOG.enter()
         for group_idx in range(len(self.vertices_by_group)):
             group_name = self.group_index_to_group_name[group_idx]
             cache_file_name = "faces_by_group_%d.npy" % group_idx
@@ -247,28 +208,22 @@ class MeshCrossRef:
                 self.faces_by_group.append(faces_in_group)
             else:
                 potential_faces_in_group = numpy.unique(numpy.array(self._potential_faces_by_group[group_idx], dtype=numpy.uint32))
-                _LOG.trace("Potential faces in group", (group_idx, len(potential_faces_in_group)))
                 faces_in_group = []
                 group_verts = self.vertices_by_group[group_idx]
                 for face_idx in potential_faces_in_group:
                     face_verts = self.vertices_by_face[face_idx]
                     mask = numpy.isin(face_verts, group_verts, assume_unique=True)
-                    _LOG.trace("Is in", (face_idx, mask, face_verts[mask]))
                     if len(face_verts[mask]) >= 3:
                         faces_in_group.append(face_idx)
                 faces_in_group = numpy.sort(numpy.unique(numpy.array(faces_in_group, dtype=numpy.uint32)))
                 self.write_array_to_cache(cache_file_name, faces_in_group)
                 self.faces_by_group.append(faces_in_group)
-            _LOG.debug("Group contains faces", (group_name, len(faces_in_group)))
 
     def _build_faces_by_vertex_table(self):
-        _LOG.enter()
-
         cache_file = None
         if self.cache_dir:
             cache_file = os.path.join(self.cache_dir, "faces_by_vertex.npy")
             if self.read_cache and os.path.exists(cache_file):
-                _LOG.debug("Reading from cache", cache_file)
                 self.faces_by_vertex = numpy.load(cache_file, allow_pickle=True)
                 return
 
@@ -278,7 +233,6 @@ class MeshCrossRef:
             vertex_found_at_2d = numpy.argwhere(self.vertices_by_face == i) # Returns 2d array where col 1 is face number and 2 is position in face
             if len(vertex_found_at_2d) > 0:
                 vertex_found_at = vertex_found_at_2d[:,0] # Extract col 1, ie the face number
-                _LOG.trace("Vertex, faces", (i, vertex_found_at))
                 faces_by_vertex.append(numpy.unique(vertex_found_at))
             else:
                 faces_by_vertex.append(numpy.array([]))
@@ -287,18 +241,14 @@ class MeshCrossRef:
         if self.write_cache and self.cache_dir:
             if os.path.exists(cache_file):
                 os.remove(cache_file)
-            _LOG.debug("Writing to cache", cache_file)
             numpy.save(cache_file, self.faces_by_vertex, allow_pickle=True)
 
 
     def _build_edges_by_vertex_table(self):
-        _LOG.enter()
-
         cache_file = None
         if self.cache_dir:
             cache_file = os.path.join(self.cache_dir, "edges_by_vertex.npy")
             if self.read_cache and os.path.exists(cache_file):
-                _LOG.debug("Reading from cache", cache_file)
                 self.edges_by_vertex = numpy.load(cache_file, allow_pickle=True)
                 return
 
@@ -308,7 +258,6 @@ class MeshCrossRef:
             vertex_found_at_2d = numpy.argwhere(self.vertices_by_edge == i) # Returns 2d array where col 1 is edge number and 2 is position in edge
             if len(vertex_found_at_2d) > 0:
                 vertex_found_at = vertex_found_at_2d[:,0] # Extract col 1, ie the edge number
-                _LOG.trace("Vertex, edges", (i, vertex_found_at))
                 edges_by_vertex.append(numpy.unique(vertex_found_at))
             else:
                 edges_by_vertex.append(numpy.array([]))
@@ -317,17 +266,13 @@ class MeshCrossRef:
         if self.write_cache and self.cache_dir:
             if os.path.exists(cache_file):
                 os.remove(cache_file)
-            _LOG.debug("Writing to cache", cache_file)
             numpy.save(cache_file, self.edges_by_vertex, allow_pickle=True)
 
     def _build_face_neighbors_table(self):
-        _LOG.enter()
-
         cache_file = None
         if self.cache_dir:
             cache_file = os.path.join(self.cache_dir, "face_neighbors.npy")
             if self.read_cache and os.path.exists(cache_file):
-                _LOG.debug("Reading from cache", cache_file)
                 self.face_neighbors = numpy.load(cache_file, allow_pickle=True)
                 return
 
@@ -341,18 +286,15 @@ class MeshCrossRef:
             to_remove = numpy.isin(found_faces, [face_idx])
             found_faces = numpy.delete(found_faces, to_remove)
             face_neighbors.append(found_faces)
-            _LOG.trace("Face neighbors", (face_idx, found_faces))
 
         self.face_neighbors = numpy.array(face_neighbors, dtype=object)
         if self.write_cache and self.cache_dir:
             if os.path.exists(cache_file):
                 os.remove(cache_file)
-            _LOG.debug("Writing to cache", cache_file)
             numpy.save(cache_file, self.face_neighbors, allow_pickle=True)
 
 
     def _build_face_median_points_table(self):
-        _LOG.enter()
         kd = mathutils.kdtree.KDTree(len(self.vertices_by_face))
         for face_idx in range(len(self.vertices_by_face)):
             numverts = len(self.vertices_by_face[face_idx])
@@ -364,7 +306,6 @@ class MeshCrossRef:
             median_point = numpy.mean(vert_table, axis=0)
             normal_raw = numpy.array(self._mesh_object.data.polygons[face_idx].normal, dtype=numpy.float32)
             normal_shifted = numpy.add(normal_raw, median_point)
-            _LOG.trace("Face vert table", (face_idx, numverts, vert_table, median_point, normal_shifted))
             self.face_normals.append(normal_shifted)
             self.face_median_points.append(median_point)
             kd.insert(list(median_point), face_idx)

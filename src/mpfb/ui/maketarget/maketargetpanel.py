@@ -15,7 +15,7 @@ _LOG = LogService.get_logger("maketarget.maketargetpanel")
 class MPFB_PT_MakeTarget_Panel(Abstract_Panel):
     """MakeTarget main panel."""
 
-    bl_label = "MakeTarget"
+    bl_label = "Target"
     bl_category = UiService.get_value("TARGETSCATEGORY")
     bl_options = {'DEFAULT_CLOSED'}
     bl_parent_id = "MPFB_PT_Create_Panel"

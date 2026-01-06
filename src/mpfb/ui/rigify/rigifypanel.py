@@ -18,7 +18,7 @@ RIGIFY_PROPERTIES = SceneConfigSet.from_definitions_in_json_directory(RIGIFY_PRO
 class MPFB_PT_Rigify_Panel(Abstract_Panel):
     """The rigfy functionality panel."""
 
-    bl_label = "Convert to rigify"
+    bl_label = "Rigify"
     bl_category = UiService.get_value("RIGCATEGORY")
     bl_options = {'DEFAULT_CLOSED'}
     bl_parent_id = "MPFB_PT_Rig_Panel"

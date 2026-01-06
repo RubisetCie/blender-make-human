@@ -12,7 +12,7 @@ _LOG = LogService.get_logger("makepose.makeposepanel")
 class MPFB_PT_MakeRig_Panel(Abstract_Panel):
     """MakeRig main panel."""
 
-    bl_label = "MakeRig"
+    bl_label = "Rig"
     bl_category = UiService.get_value("RIGCATEGORY")
     bl_options = {'DEFAULT_CLOSED'}
     bl_parent_id = "MPFB_PT_Create_Panel"

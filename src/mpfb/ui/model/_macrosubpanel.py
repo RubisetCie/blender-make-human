@@ -42,7 +42,7 @@ _MACROTARGETS = {
 class MPFB_PT_Macro_Sub_Panel(bpy.types.Panel):
     """Human macro modeling panel."""
 
-    bl_label = "phenotype"
+    bl_label = "Phenotype"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_parent_id = "MPFB_PT_Model_Panel"

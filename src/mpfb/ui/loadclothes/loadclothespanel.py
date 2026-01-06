@@ -15,7 +15,7 @@ LOAD_CLOTHES_PROPERTIES = SceneConfigSet.from_definitions_in_json_directory(LOAD
 
 class MPFB_PT_Load_Clothes_Panel(Abstract_Panel):
     """UI for loading MHCLO files."""
-    bl_label = "Load MHCLO"
+    bl_label = "Load Clothes"
     bl_category = UiService.get_value("CLOTHESCATEGORY")
     bl_options = {'DEFAULT_CLOSED'}
     bl_parent_id = "MPFB_PT_Assets_Panel"

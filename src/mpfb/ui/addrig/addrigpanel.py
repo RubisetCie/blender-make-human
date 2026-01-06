@@ -19,7 +19,7 @@ ADD_RIG_PROPERTIES = SceneConfigSet.from_definitions_in_json_directory(ADD_RIG_P
 class MPFB_PT_Add_Rig_Panel(Abstract_Panel):
     """Functionality for adding/setting rig"""
 
-    bl_label = "Add rig"
+    bl_label = "Add Rig"
     bl_category = UiService.get_value("MODELCATEGORY")
     bl_parent_id = "MPFB_PT_Rig_Panel"
 

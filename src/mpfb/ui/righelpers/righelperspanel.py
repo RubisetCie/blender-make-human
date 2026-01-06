@@ -14,7 +14,7 @@ SETUP_HELPERS_PROPERTIES_DIR = os.path.join(_LOC, "properties")
 SETUP_HELPERS_PROPERTIES = SceneConfigSet.from_definitions_in_json_directory(SETUP_HELPERS_PROPERTIES_DIR, prefix="SIK_")
 
 class MPFB_PT_RigHelpersPanel(Abstract_Panel):
-    bl_label = "Rig helpers"
+    bl_label = "Rig Helpers"
     bl_category = UiService.get_value("RIGCATEGORY")
     bl_options = {'DEFAULT_CLOSED'}
     bl_parent_id = "MPFB_PT_Rig_Panel"

@@ -1,0 +1,31 @@
+name: Build Blender Addon
+on: workflow_dispatch
+env:
+  ADDONNAME: make-human
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Extracting Version
+        run: echo "ADDONVER=$(grep -oP '^version *= *\"?\K[0-9|\.]+' blender_manifest.toml)" >> $GITHUB_ENV
+        working-directory: src/mpfb
+      - name: Applying Version
+        run: |
+          VER=$(sed 's/\./, /g' <<< $ADDONVER)
+          sed -Ei "s/^VERSION *= *\([0-9]+ *, *[0-9]+ *, *[0-9]+ *\)/VERSION = ($VER)/" ./__init__.py
+          sed -Ei "s/^BUILD_INFO *= .*$/BUILD_INFO = \"$(date '+%Y%m%d')\"/" ./__init__.py
+        working-directory: src/mpfb
+      - name: Building Addon
+        run: zip -9 -r -Z bzip2 "${ADDONNAME}-${ADDONVER}.zip" *
+        working-directory: src/mpfb
+      - name: Draft Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: v${{env.ADDONVER}}
+          tag_name: v${{env.ADDONVER}}
+          prerelease: false
+          draft: true
+          files: src/mpfb/${{env.ADDONNAME}}-${{env.ADDONVER}}.zip

@@ -24,13 +24,13 @@ _SETTINGS_LIST_PROP = {
     "type": "enum",
     "name": "available_presets",
     "description": "These are the currently available saved characters",
-    "label": "Available presets",
+    "label": "Presets",
     "default": 0
 }
 HUMAN_PRESETS_PROPERTIES.add_property(_SETTINGS_LIST_PROP, _populate_settings)
 
 class MPFB_PT_Human_Presets_Panel(Abstract_Panel):
-    bl_label = "Human save files"
+    bl_label = "Human Saves"
     bl_category = UiService.get_value("MATERIALSCATEGORY")
     bl_options = {'DEFAULT_CLOSED'}
     bl_parent_id = "MPFB_PT_Presets_Panel"

@@ -101,7 +101,7 @@ MAKEUP_PROPERTIES.add_property(_LAYER_LIST_PROP, _populate_layer)
 class MPFB_PT_MakeUp_Panel(Abstract_Panel):
     """UI for various makeup related functions."""
 
-    bl_label = "MakeUp"
+    bl_label = "Makeup"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_category = UiService.get_value("MATERIALSCATEGORY")
@@ -120,14 +120,6 @@ class MPFB_PT_MakeUp_Panel(Abstract_Panel):
         MAKEUP_PROPERTIES.draw_properties(scene, box, ["layer_number", "ink_layer_name"])
         box.operator("mpfb.write_ink_layer")
 
-    def _developer(self, scene, layout):
-        """create_assets -> makeup -> developer"""
-        box = self.create_box(layout, "MakeUP Developer")
-        MAKEUP_PROPERTIES.draw_properties(scene, box, ["uv_map_name"])
-        box.operator("mpfb.create_uv_map")
-        box.operator("mpfb.write_uv_map")
-        box.operator("mpfb.import_uv_map")
-
     def draw(self, context):
         """Draw the create_assets -> makeup panel hierarcy"""
         _LOG.enter()
@@ -135,7 +127,6 @@ class MPFB_PT_MakeUp_Panel(Abstract_Panel):
         scene = context.scene
         self._add_ink_layer(scene, layout)
         self._write_ink_layer(scene, layout)
-        self._developer(scene, layout)
 
 
 ClassManager.add_class(MPFB_PT_MakeUp_Panel)

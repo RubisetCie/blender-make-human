@@ -1,12 +1,9 @@
 """File containing the base class for UI panels"""
 
 import bpy
-from ..services import LogService
 from ..services import ObjectService
 from ..services import TargetService
 from ..services import UiService
-
-_LOG = LogService.get_logger("ui.abstractpanel")
 
 class Abstract_Panel(bpy.types.Panel):
     """Human modeling panel."""
@@ -18,7 +15,6 @@ class Abstract_Panel(bpy.types.Panel):
     bl_options = {'DEFAULT_CLOSED'}
 
     def create_box(self, layout: bpy.types.UILayout, box_text: str, icon=None):
-        _LOG.enter()
         box = layout.box()
         box.label(text=box_text)
         return box

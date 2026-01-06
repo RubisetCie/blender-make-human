@@ -1,12 +1,9 @@
 import bpy, sys
 from .. import ClassManager
-from ..services import LogService
 from ..services import SystemService
 from ..services import LOWEST_FUNCTIONAL_BLENDER_VERSION
 from .abstractpanel import Abstract_Panel
 from .. import BUILD_INFO, VERSION
-
-_LOG = LogService.get_logger("ui.versionpanel")
 
 
 class MPFB_PT_Version_Panel(bpy.types.Panel):
@@ -17,7 +14,6 @@ class MPFB_PT_Version_Panel(bpy.types.Panel):
     bl_category = "MPFB v%d.%d-a%d" % (VERSION[0], VERSION[1], VERSION[2])
 
     def draw(self, context):
-        _LOG.enter()
         layout = self.layout
         layout.label(text="REQUIRED BLENDER VERSION: %s" % str(LOWEST_FUNCTIONAL_BLENDER_VERSION))
         layout.label(text="")

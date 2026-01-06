@@ -19,7 +19,7 @@ _LOG = LogService.get_logger("makeskin.makeskinpanel")
 class MPFB_PT_MakeSkin_Panel(Abstract_Panel):
     """MakeSkin main panel."""
 
-    bl_label = "MakeSkin"
+    bl_label = "Skin"
     bl_category = UiService.get_value("MATERIALSCATEGORY")
     bl_options = {'DEFAULT_CLOSED'}
     bl_parent_id = "MPFB_PT_Create_Panel"

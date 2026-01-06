@@ -14,7 +14,7 @@ _LOG = LogService.get_logger("basemeshops.basemeshopspanel")
 #SCULPT_PROPERTIES = SceneConfigSet.from_definitions_in_json_directory(SCULPT_PROPERTIES_DIR, prefix="SCL_")
 
 class MPFB_PT_BasemeshOpsPanel(Abstract_Panel):
-    bl_label = "Basemesh"
+    bl_label = "Base Mesh"
     bl_category = UiService.get_value("OPERATIONSCATEGORY")
     bl_options = {'DEFAULT_CLOSED'}
     bl_parent_id = "MPFB_PT_Operations_Panel"

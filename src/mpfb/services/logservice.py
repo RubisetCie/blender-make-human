@@ -1,7 +1,7 @@
 """Functionality for logging and profiling"""
 
-import os, bpy, time, pprint, inspect, json
-from .. import get_preference, DEBUG, MPFB_CONTEXTUAL_INFORMATION
+import os, bpy, time
+from .. import get_preference, MPFB_CONTEXTUAL_INFORMATION
 
 # There's a catch 22 where paths should be read from the location
 # service, but the location service is dependent on the log service
@@ -11,7 +11,7 @@ _OVERRIDDEN_HOME = None
 try:
     _OVERRIDDEN_HOME = get_preference("mpfb_user_data")
 except:
-    print("Could not read preference mpfb_user_data")
+    pass
 
 _BPYHOME = bpy.utils.resource_path('USER')  # pylint: disable=E1111
 if _OVERRIDDEN_HOME is None or not _OVERRIDDEN_HOME:
@@ -21,21 +21,6 @@ else:
 
 _LOGDIR = os.path.abspath(os.path.join(_MPFBHOME, "logs"))
 _COMBINED = os.path.join(_LOGDIR, "combined.txt")
-_CONFIG_DIR = os.path.join(_MPFBHOME, "config")
-_CONFIG = os.path.join(_CONFIG_DIR, "log_levels.json")
-
-if DEBUG:
-    print("\nInitializing MPFB log service. Logs can be found in " + str(_LOGDIR) + "\n")
-
-if not os.path.exists(_LOGDIR):
-    os.makedirs(_LOGDIR, exist_ok=True)
-
-if not os.path.exists(_CONFIG_DIR):
-    os.makedirs(_CONFIG_DIR, exist_ok=True)
-
-_JUSTIFICATION = 40
-_START = int(time.time() * 1000.0)
-
 
 class Logger():
 
@@ -44,29 +29,10 @@ class Logger():
     filtering of messages so that only those of a certain severity or higher are logged. This is useful for
     debugging and monitoring the behavior of the application."""
 
-    def __init__(self, name, level=5):
+    def __init__(self, name, level=0):
         """Construct a new log channel."""
-        self.name = name
         self.level = level
-        self.level_is_overridden = False
         self.path = os.path.join(_LOGDIR, "separated." + name + ".txt")
-        self.time_stamp = _START
-        with open(self.path, "w", encoding="utf-8") as log_file:
-            log_file.write("")
-
-    def _log_message(self, level, message, extra_object=None):
-        if level <= self.level:
-            extra = ""
-            if not extra_object is None:
-                extra = " " + str(extra_object)
-            location = str(self.name + " ").ljust(_JUSTIFICATION, ".") + ": "
-            long_message = "[" + LogService.LOGLEVELS[level] + "] " + location + message + extra
-            short_message = "[" + LogService.LOGLEVELS[level] + "] " + message + extra
-            print(long_message)
-            with open(self.path, "a", encoding="utf-8") as log_file:
-                log_file.write(short_message + "\n")
-            with open(_COMBINED, "a", encoding="utf-8") as log_file:
-                log_file.write(long_message + "\n")
 
     def debug_enabled(self):
         """Check if debug logging is enabled for this logger."""
@@ -75,81 +41,47 @@ class Logger():
     def set_level(self, level):
         """Set the highest level to report for this channel"""
         self.level = level
-        self.level_is_overridden = True
 
     def get_level(self):
         """Get the highest level to report for this channel."""
         return self.level
 
     def crash(self, message, extra_object=None):
-        """Report a crash. This will always be reported, no matter what the log level is set to."""
-        self._log_message(LogService.CRASH, message, extra_object)
+        pass
 
     def error(self, message, extra_object=None):
-        """Report an error, if the log level is at least 1."""
-        self._log_message(LogService.ERROR, message, extra_object)
+        pass
 
     def warn(self, message, extra_object=None):
-        """Report a warning, if the log level is at least 2."""
-        self._log_message(LogService.WARN, message, extra_object)
+        pass
 
     def info(self, message, extra_object=None):
-        """Report an information, if the log level is at least 3."""
-        self._log_message(LogService.INFO, message, extra_object)
+        pass
 
     def debug(self, message, extra_object=None):
-        """Report a debug message, if the log level is at least 4."""
-        self._log_message(LogService.DEBUG, message, extra_object)
+        pass
 
     def trace(self, message, extra_object=None):
-        """Report an trace message, if the log level is at least 5."""
-        self._log_message(LogService.TRACE, message, extra_object)
+        pass
 
     def dump(self, message, extra_object):
-        """Dump a large data structure to the log, if the log level is at least trace."""
-        if self.level > LogService.TRACE:
-            if isinstance(extra_object, str):
-                serialized_object = "\n" + extra_object
-            else:
-                serialized_object = "\n" + pprint.pformat(extra_object, 4, 180, depth=5)
-            self._log_message(LogService.DUMP, message, serialized_object)
+        pass
 
     def enter(self):
-        """Report that a method was entered, if the log level is at least trace."""
-        if self.level >= LogService.TRACE:
-            info = dict()
-            stack = inspect.currentframe().f_back
-            info["line_number"] = str(stack.f_lineno)
-            info["caller_name"] = stack.f_globals["__name__"]
-            info["file_name"] = stack.f_globals["__file__"]
-            info["caller_method"] = inspect.stack()[1][3]
-            message = "Now entering {}.{}():{}".format(info["caller_name"], info["caller_method"], info["line_number"])
-            self._log_message(LogService.TRACE, message)
+        pass
 
     def leave(self):
-        """Report that a method is about to be exited, if the log level is at least trace."""
-        if self.level >= LogService.TRACE:
-            info = dict()
-            stack = inspect.currentframe().f_back
-            info["line_number"] = str(stack.f_lineno)
-            info["caller_name"] = stack.f_globals["__name__"]
-            info["file_name"] = stack.f_globals["__file__"]
-            info["caller_method"] = inspect.stack()[1][3]
-            message = "Now leaving {}.{}():{}".format(info["caller_name"], info["caller_method"], info["line_number"])
-            self._log_message(LogService.TRACE, message)
+        pass
 
     def get_current_time(self):
         """Return the number of millisections which has passed since time was last reset for this channel."""
-        return int(time.time() * 1000.0) - self.time_stamp
+        return int(time.time() * 1000.0)
 
     def time(self, message):
-        """Report a timestamp message, if log level is at least debug."""
-        current = int(time.time() * 1000.0)
-        self._log_message(LogService.DEBUG, message, current - self.time_stamp)
+        pass
 
     def reset_timer(self):
-        """Reset the timer for this log channel"""
-        self.time_stamp = int(time.time() * 1000.0)
+        pass
 
     def get_path_to_log_file(self):
         """Return the absolute path to the log file for this logger."""
@@ -222,19 +154,9 @@ class _LogService():
 
     def __init__(self):
         self._loggers = dict()
-        self._default_log_level = LogService.INFO
+        self._default_log_level = LogService.CRASH
         self._level_overrides = dict()
         self._level_overrides["default"] = self._default_log_level
-        if os.path.exists(_CONFIG):
-            with open(_CONFIG, "r", encoding="utf-8") as json_file:
-                self._level_overrides = json.load(json_file)
-            if "default" in self._level_overrides:
-                self._default_log_level = self._level_overrides["default"]
-        else:
-            print("Log config does not exist. Creating empty template.")
-            self.rewrite_json()
-        with open(_COMBINED, "w", encoding="utf-8") as log_file:
-            log_file.write("")
 
     def get_default_log_level(self):
         """Return the default log level."""
@@ -260,9 +182,7 @@ class _LogService():
         This method updates the log configuration file (_CONFIG) with the current state of the
         level overrides (_level_overrides) in JSON format.
         """
-        print("Will rewrite log config " + _CONFIG)
-        with open(_CONFIG, "w", encoding="utf-8") as json_file:
-            json.dump(self._level_overrides, json_file)
+        pass
 
     def get_or_create_log_channel(self, name):
         """Get an existing log channel or create a new one if it doesn't exist.

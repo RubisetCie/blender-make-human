@@ -12,7 +12,7 @@ _LOG = LogService.get_logger("makerig.bonespanel")
 class MPFB_PT_MakeRigBones_Panel(Abstract_Panel):
     """MakeRig bones panel."""
 
-    bl_label = "Manage bones"
+    bl_label = "Manage Bones"
     bl_category = UiService.get_value("RIGCATEGORY")
     bl_options = {'DEFAULT_CLOSED'}
     bl_parent_id = "MPFB_PT_MakeRig_Panel"

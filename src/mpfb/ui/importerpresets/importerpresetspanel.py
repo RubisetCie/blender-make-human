@@ -26,7 +26,7 @@ _PRESETS_LIST_PROP = {
     "type": "enum",
     "name": "available_presets",
     "description": "Available presets",
-    "label": "Available presets",
+    "label": "Presets",
     "default": 0
 }
 IMPORTER_PRESETS_PROPERTIES.add_property(_PRESETS_LIST_PROP, _populate_presets)

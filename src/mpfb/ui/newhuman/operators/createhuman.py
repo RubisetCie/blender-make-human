@@ -15,7 +15,7 @@ _LOG = LogService.get_logger("newhuman.createhuman")
 class MPFB_OT_CreateHumanOperator(MpfbOperator):
     """Create a new human"""
     bl_idname = "mpfb.create_human"
-    bl_label = "Create human"
+    bl_label = "Create Human"
     bl_options = {'REGISTER', 'UNDO'}
 
     def get_logger(self):

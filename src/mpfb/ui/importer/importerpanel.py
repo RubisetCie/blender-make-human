@@ -41,7 +41,7 @@ _PRESETS_LIST_PROP = {
     "type": "enum",
     "name": "presets_for_import",
     "description": "Presets to use when importing a human",
-    "label": "Presets to use",
+    "label": "Presets",
     "default": 0
 }
 IMPORTER_PROPERTIES.add_property(_PRESETS_LIST_PROP, _populate_presets)
@@ -50,7 +50,7 @@ _SKIN_SETTINGS_LIST_PROP = {
     "type": "enum",
     "name": "skin_settings_for_import",
     "description": "Skin material settings to use when importing a human. These are created on the material tab",
-    "label": "Skin settings to use",
+    "label": "Skin Settings",
     "default": 0
 }
 IMPORTER_PROPERTIES.add_property(_SKIN_SETTINGS_LIST_PROP, _populate_skin_settings)
@@ -59,7 +59,7 @@ _EYE_SETTINGS_LIST_PROP = {
     "type": "enum",
     "name": "eye_settings_for_import",
     "description": "Eye material settings to use when importing a human. These are created on the material tab",
-    "label": "Eye settings to use",
+    "label": "Eye Settings",
     "default": 0
 }
 IMPORTER_PROPERTIES.add_property(_EYE_SETTINGS_LIST_PROP, _populate_skin_settings)

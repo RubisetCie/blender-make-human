@@ -12,7 +12,7 @@ _LOG = LogService.get_logger("makerig.weightspanel")
 class MPFB_PT_MakeRigWeights_Panel(Abstract_Panel):
     """MakeRig weights panel."""
 
-    bl_label = "Manage weights"
+    bl_label = "Manage Weights"
     bl_category = UiService.get_value("RIGCATEGORY")
     bl_options = {'DEFAULT_CLOSED'}
     bl_parent_id = "MPFB_PT_MakeRig_Panel"

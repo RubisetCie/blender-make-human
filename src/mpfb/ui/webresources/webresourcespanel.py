@@ -9,7 +9,7 @@ _LOG = LogService.get_logger("webresources.webresourcespanel")
 
 class MPFB_PT_Web_Resources_Panel(Abstract_Panel):
     """UI for opening web links."""
-    bl_label = "Web resources"
+    bl_label = "Web Resources"
     bl_category = UiService.get_value("DEVELOPERCATEGORY")
     bl_options = {'DEFAULT_CLOSED'}
     bl_parent_id = "MPFB_PT_System_Panel"
@@ -23,7 +23,7 @@ class MPFB_PT_Web_Resources_Panel(Abstract_Panel):
         layout = self.layout
 
         self._url(layout, "Project homepage", "http://static.makehumancommunity.org/mpfb.html")
-        self._url(layout, "Source code", "https://github.com/makehumancommunity/mpfb2")
+        self._url(layout, "Source code", "https://github.com/RubisetCie/blender-make-human")
         self._url(layout, "Documentation", "http://static.makehumancommunity.org/mpfb/docs.html")
         self._url(layout, "Get support", "http://www.makehumancommunity.org/forum/")
         self._url(layout, "Report a bug", "https://github.com/makehumancommunity/mpfb2/issues")

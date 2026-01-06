@@ -35,12 +35,7 @@ class _UiService():
         self._state = dict()
         self.set_value("PROPERTYPREFIX", "MPFB_")
 
-        ui_prefix = "MPFB v%d.%d.%d" % (VERSION[0], VERSION[1], VERSION[2])
-
-        label = get_preference("mpfb_shelf_label")
-        _LOG.debug("Shelf label", label)
-        if label and not str(label).strip() == "":
-            ui_prefix = label
+        ui_prefix = "MakeHuman"
 
         multi = False  # get_preference("multi_panel")
         _LOG.debug("multi_panel", multi)
@@ -145,7 +140,7 @@ class _UiService():
         _LOG.enter()
         _LOG.debug("Rebuilding the list of available importer presets (for importer panel)")
         presets = [
-            ("FROM_UI", "Use ui settings", "use the settings currently set in the UI", 0),
+            ("FROM_UI", "From UI", "use the settings currently set in the UI", 0),
             ("default", "Default", "the default presets", 1)
         ]
         current_id = 2

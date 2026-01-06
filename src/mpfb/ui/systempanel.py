@@ -1,16 +1,13 @@
 import bpy, sys
 from .. import ClassManager
-from ..services import LogService
 from ..services import UiService
 from ..services import ObjectService
 from .abstractpanel import Abstract_Panel
 from .. import BUILD_INFO, VERSION
 
-_LOG = LogService.get_logger("ui.systempanel")
-
 
 class MPFB_PT_System_Panel(Abstract_Panel):
-    bl_label = "System and resources"
+    bl_label = "System & Resources"
     bl_category = UiService.get_value("DEVELOPERCATEGORY")
 
     def _system_info(self, context, scene, layout):
@@ -21,7 +18,6 @@ class MPFB_PT_System_Panel(Abstract_Panel):
         box.label(text="Python Version: %s" % str(pyver))
 
     def draw(self, context):
-        _LOG.enter()
         layout = self.layout
         scene = context.scene
         self._system_info(context, scene, layout)

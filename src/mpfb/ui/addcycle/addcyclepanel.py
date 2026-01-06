@@ -13,7 +13,7 @@ from ..abstractpanel import Abstract_Panel
 class MPFB_PT_Add_Cycle_Panel(Abstract_Panel):
     """Deprecated functionality for adding/setting walk cycle"""
 
-    bl_label = "Add walk cycle"
+    bl_label = "Add Walk Cycle"
     bl_category = UiService.get_value("MODELCATEGORY")
     bl_parent_id = "MPFB_PT_Rig_Panel"
 

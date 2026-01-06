@@ -1,4 +1,3 @@
-from ....services import LogService
 from ....services import MaterialService
 from ....services import ObjectService
 from ....services import LocationService
@@ -8,8 +7,6 @@ import bpy, json, math, os
 from bpy.types import StringProperty
 from bpy_extras.io_utils import ImportHelper
 
-_LOG = LogService.get_logger("developer.operators.loadpartial")
-
 class MPFB_OT_Load_Partial_Operator(bpy.types.Operator):
     """Load partial pose matching rig type"""
     bl_idname = "mpfb.load_partial"
@@ -18,7 +15,6 @@ class MPFB_OT_Load_Partial_Operator(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        _LOG.enter()
         if context.object is None:
             return False
         if context.object is None or context.object.type != 'ARMATURE':
@@ -26,8 +22,6 @@ class MPFB_OT_Load_Partial_Operator(bpy.types.Operator):
         return True
 
     def execute(self, context):
-        _LOG.enter()
-
         if context.object is None or context.object.type != 'ARMATURE':
             self.report({'ERROR'}, "Must have armature as active object")
             return {'FINISHED'}
@@ -50,7 +44,6 @@ class MPFB_OT_Load_Partial_Operator(bpy.types.Operator):
         pose_root = os.path.join(poses_root, rig_type + mode)
 
         absolute_file_path = bpy.path.abspath(os.path.join(pose_root, name + ".json"))
-        _LOG.debug("absolute_file_path", absolute_file_path)
 
         if not os.path.exists(absolute_file_path):
             self.report({'ERROR'}, "The selected pose '" + name + "' for rig type '" + rigtype + mode + "' does not exist as file. You should probably report this as a bug.")

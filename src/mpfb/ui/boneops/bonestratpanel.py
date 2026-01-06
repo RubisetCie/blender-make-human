@@ -17,7 +17,7 @@ _LOG = LogService.get_logger("poseops.bonestratpanel")
 
 
 class MPFB_PT_BonestratPanel(Abstract_Panel):
-    bl_label = "MPFB Bone Strategies"
+    bl_label = "Bone Strategies"
     bl_space_type = "PROPERTIES"
     bl_region_type = 'WINDOW'
     bl_context = "bone"

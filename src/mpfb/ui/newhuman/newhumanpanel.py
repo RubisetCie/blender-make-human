@@ -16,7 +16,7 @@ NEW_HUMAN_PROPERTIES = SceneConfigSet.from_definitions_in_json_directory(NEW_HUM
 class MPFB_PT_NewHuman_Panel(bpy.types.Panel):
     """Create human from scratch main panel."""
 
-    bl_label = "From scratch"
+    bl_label = "From Scratch"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_category = UiService.get_value("MODELCATEGORY")

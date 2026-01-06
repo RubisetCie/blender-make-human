@@ -57,7 +57,7 @@ MAKECLOTHES_PROPERTIES.add_property(_GROUPS_LIST_PROP, _populate_groups)
 class MPFB_PT_MakeClothes_Panel(Abstract_Panel):
     """MakeClothes main panel."""
 
-    bl_label = "MakeClothes"
+    bl_label = "Clothes"
     bl_category = UiService.get_value("CLOTHESCATEGORY")
     bl_options = {'DEFAULT_CLOSED'}
     bl_parent_id = "MPFB_PT_Create_Panel"

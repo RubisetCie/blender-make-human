@@ -60,7 +60,7 @@ MAKEWEIGHT_PROPERTIES.add_property(_GROUPS_LIST_PROP, _populate_groups)
 class MPFB_PT_MakeWeight_Panel(Abstract_Panel):
     """MakeWeight main panel."""
 
-    bl_label = "MakeWeight"
+    bl_label = "Weight"
     bl_category = UiService.get_value("MODELCATEGORY")
     bl_options = {'DEFAULT_CLOSED'}
     bl_parent_id = "MPFB_PT_Create_Panel"

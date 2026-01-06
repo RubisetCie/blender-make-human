@@ -1,13 +1,10 @@
 """This is the root panel for the asset library."""
 
 from .. import ClassManager
-from ..services import LogService
 from ..services import UiService
 from ..services import AssetService
 from .abstractpanel import Abstract_Panel
 from ..services import SceneConfigSet
-
-_LOG = LogService.get_logger("ui.assetspanel")
 
 FILTER_PROPERTIES = SceneConfigSet([
     {
@@ -35,12 +32,11 @@ FILTER_PROPERTIES = SceneConfigSet([
 
 
 class MPFB_PT_Assets_Panel(Abstract_Panel):
-    bl_label = "Apply assets"
+    bl_label = "Apply Assets"
     bl_category = UiService.get_value("MATERIALSCATEGORY")
 
     def system_assets(self, layout):
         (has_sys_assets, modern_sys_assets) = AssetService.check_if_modern_makehuman_system_assets_installed()
-        _LOG.debug("has_sys_assets", (has_sys_assets, modern_sys_assets))
 
         if has_sys_assets and modern_sys_assets:
             return
@@ -62,7 +58,6 @@ class MPFB_PT_Assets_Panel(Abstract_Panel):
             box.label(text="if you encounter problems.")
 
     def draw(self, context):
-        _LOG.enter()
         layout = self.layout
 
         self.system_assets(layout)
@@ -71,10 +66,7 @@ class MPFB_PT_Assets_Panel(Abstract_Panel):
         box.label(text="Filter")
         show_props = ["filter"]
         if AssetService.have_any_pack_meta_data():
-            _LOG.debug("There is pack metadata")
             show_props.append("packname")
-        else:
-            _LOG.debug("There is no pack metadata")
         show_props.append("only_equipped")
         FILTER_PROPERTIES.draw_properties(context.scene, box, show_props)
 

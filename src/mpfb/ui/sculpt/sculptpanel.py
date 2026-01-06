@@ -15,7 +15,7 @@ SCULPT_PROPERTIES_DIR = os.path.join(_LOC, "properties")
 SCULPT_PROPERTIES = SceneConfigSet.from_definitions_in_json_directory(SCULPT_PROPERTIES_DIR, prefix="SCL_")
 
 class MPFB_PT_SculptPanel(Abstract_Panel):
-    bl_label = "Set up for sculpt"
+    bl_label = "Sculpt"
     bl_category = UiService.get_value("OPERATIONSCATEGORY")
     bl_options = {'DEFAULT_CLOSED'}
     bl_parent_id = "MPFB_PT_Operations_Panel"
