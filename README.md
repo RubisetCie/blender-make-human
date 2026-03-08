@@ -5,6 +5,3 @@
 
 In order to get up and running quickly, see the [quick start](http://static.makehumancommunity.org/mpfb/docs/getting_started.html) guide.
 The quick start guide is also where you can find download links. There is also a [getting started video tutorial](https://www.youtube.com/watch?v=9jmTdhVjAsI) on youtube.
-
-> [!NOTE]
-> Note that this addon requires a Blender version of at least 4.2.

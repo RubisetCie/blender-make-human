@@ -1,6 +1,6 @@
 """Contains a class for cross-referencing data in a mesh."""
 
-import numpy, time, mathutils, os
+import numpy, mathutils, os
 from ..services import MeshService
 from ..services import ObjectService
 
@@ -61,43 +61,43 @@ class MeshCrossRef:
                     _stripped_mesh_object.modifiers.remove(modifier)
             self._mesh_object = _stripped_mesh_object
 
-        self.vertex_coordinates = MeshService.get_vertex_coordinates_as_numpy_array(self._mesh_object, after_modifiers=after_modifiers)
-        self.vertex_coordinates_kdtree = MeshService.get_kdtree(self._mesh_object, after_modifiers=after_modifiers)
-        self.vertices_by_face = MeshService.get_faces_as_numpy_array(self._mesh_object)
-        self.vertices_by_edge = MeshService.get_edges_as_numpy_array(self._mesh_object)
+        try:
+            self.vertex_coordinates = MeshService.get_vertex_coordinates_as_numpy_array(self._mesh_object, after_modifiers=after_modifiers)
+            self.vertex_coordinates_kdtree = MeshService.get_kdtree(self._mesh_object, after_modifiers=after_modifiers)
+            self.vertices_by_face = MeshService.get_faces_as_numpy_array(self._mesh_object)
+            self.vertices_by_edge = MeshService.get_edges_as_numpy_array(self._mesh_object)
 
-        self.faces_by_vertex = []
-        self._build_faces_by_vertex_table()
+            self.faces_by_vertex = []
+            self._build_faces_by_vertex_table()
 
-        self.edges_by_vertex = []
-        self._build_edges_by_vertex_table()
+            self.edges_by_vertex = []
+            self._build_edges_by_vertex_table()
 
-        self.face_neighbors = []
-        self._build_face_neighbors_table()
+            self.face_neighbors = []
+            self._build_face_neighbors_table()
 
-        self.face_median_points = []
-        self.face_normals = []
-        self.face_median_points_kdtree = None
-        self._build_face_median_points_table()
+            self.face_median_points = []
+            self.face_normals = []
+            self.face_median_points_kdtree = None
+            self._build_face_median_points_table()
 
-        self.group_index_to_group_name = []
-        self.group_name_to_group_index = dict()
-        self.vertices_by_group = []
-        self._potential_faces_by_group = []
-        self.vertices_without_group = []
-        self.vertices_with_multiple_groups = []
-        self.face_median_points_by_group_kdtrees = []
-        self._build_vert_group_references(build_faces_by_group_reference=build_faces_by_group_reference)
+            self.group_index_to_group_name = []
+            self.group_name_to_group_index = dict()
+            self.vertices_by_group = []
+            self._potential_faces_by_group = []
+            self.vertices_without_group = []
+            self.vertices_with_multiple_groups = []
+            self.face_median_points_by_group_kdtrees = []
+            self._build_vert_group_references(build_faces_by_group_reference=build_faces_by_group_reference)
 
-        if build_faces_by_group_reference:
-            self.faces_by_group = []
-            self._build_faces_by_group_table()
-            self._build_faces_by_group_kdtrees()
-
-        if after_modifiers:
-            ObjectService.delete_object(self._mesh_object)
-
-        self._mesh_object = None
+            if build_faces_by_group_reference:
+                self.faces_by_group = []
+                self._build_faces_by_group_table()
+                self._build_faces_by_group_kdtrees()
+        finally:
+            if after_modifiers and self._mesh_object is not None:
+                ObjectService.delete_object(self._mesh_object)
+                self._mesh_object = None
 
     def read_array_from_cache(self, cache_file_name):
         if not self.cache_dir or not self.read_cache:

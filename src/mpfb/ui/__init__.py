@@ -53,6 +53,8 @@ if SystemService.is_blender_version_at_least():
     from .sculpt import *
     from .matops import *
     from .boneops import *
+    from .exportops import *
+    from .faceops import *
     from .ai import *
 
     # System
