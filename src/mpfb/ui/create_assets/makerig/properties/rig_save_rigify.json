@@ -1,0 +1,7 @@
+{
+    "type": "boolean",
+    "name": "rig_save_rigify",
+    "description": "Save rigify layer data with the rig",
+    "label": "Save rigify layers",
+    "default": false
+}

@@ -11,7 +11,7 @@ import mathutils
 _LOG = LogService.get_logger("entities.vertexmatch")
 
 class VertexMatch:
-    def __init__(self, focus_obj, focus_vert_index, focus_crossref, target_obj, target_crossref, scale_factor=1.0, reference_scale=None):
+    def __init__(self, focus_obj, focus_vert_index, focus_crossref, target_obj, target_crossref, scale_factor=1.0, reference_scale=None, allow_exact=True):
         """Construct a VertexMatch object.
 
         Parameters:
@@ -67,7 +67,8 @@ class VertexMatch:
         self.exact_match_coord = None
 
         _LOG.trace("------------------------ Exact match strategy ------------------------")
-        self._attempt_exact_match()
+        if allow_exact:
+            self._attempt_exact_match()
 
         if not self.final_strategy:
             _LOG.trace("------------------------ Rigid group strategy ------------------------")
@@ -232,6 +233,13 @@ class VertexMatch:
 
         (vector, index, distance) = closest[0]
         if distance < 0.001:
+            # Check if the matched vertex belongs to the same vertex group
+            if index not in self.target_crossref.vertices_by_group[self.target_group_idx]:
+                _LOG.debug("Closest vertex not in matching vertex group", {
+                    "vertex_index": index,
+                    "expected_group": self.focus_vert_group_name
+                })
+                return
             self.final_strategy = "EXACT"
             self.exact_match_index = index
             self.exact_match_coord = vector

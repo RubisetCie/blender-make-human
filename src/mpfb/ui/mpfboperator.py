@@ -9,6 +9,12 @@ from .. import VERSION, BUILD_INFO
 
 _LOG = LogService.get_logger("MpfbOperator")
 
+_RAISE_EXCEPTIONS = False
+
+def set_raise_exceptions_in_mpfboperator(raise_exceptions):
+    """Set whether exceptions should be raised or not. This is used for testing purposes."""
+    global _RAISE_EXCEPTIONS
+    _RAISE_EXCEPTIONS = raise_exceptions
 
 class MpfbOperator(bpy.types.Operator):
     """Abstract wrapper for UI operators, providing help for writing error summaries"""
@@ -21,7 +27,10 @@ class MpfbOperator(bpy.types.Operator):
 
     def get_logger(self):
         """Return the logger associated with this operator. This should be overriden by subclasses."""
+
+        # Use module level logger here since the problem is that the child class did not have a logger assigned
         _LOG.warn("Subclass of MpfbOperator did not override the get_logger() method.", self.__class__.__name__)
+
         return _LOG
 
     def _generate_error_information(self, context, error, tb=""):
@@ -84,17 +93,31 @@ class MpfbOperator(bpy.types.Operator):
         return out
 
     def execute(self, context):
-        """The excute method called by blender. This will wrap the actual execute method in a try/except block. If an exception is raised, it will be logged
-        and a summary of the error will be written to a log file."""
+        """The execute method called by blender. This will wrap the actual execute method in a try/except block. If an exception is raised, it will be logged
+        and a summary of the error will be written to a log file. In the default behaviour, the exception will then be silently swallowed.
+
+        For unit testing, it is possible to override the default behavior by setting _RAISE_EXCEPTIONS to True. The exception
+        will then be re-raised after logging.
+        """
         self.LOG.enter()
-        _LOG.debug("Executing %s" % self.__class__.__name__)
+        global _RAISE_EXCEPTIONS
+
+        # Use module level logger here since the purpose of this log entry is to be able to track uses of the MpfbOperator base class
+        _LOG.debug("In execute method of MpfbOperator child", self.__class__.__name__)
+
+        caught_exception = None
         try:
             return self.hardened_execute(context)
         except Exception as e:
             self.LOG.crash("Execution caused an exception", self._generate_error_information(context, e, traceback.format_exc()))
             # print(traceback.format_exc())
             self.report({'ERROR'}, "An unhandled exception was encountered: %s. See console or log for information to provide in error report." % e)
-            return {'CANCELLED'}
+            if not _RAISE_EXCEPTIONS:
+                return {'CANCELLED'}
+            caught_exception = e
+        if caught_exception is not None:
+            raise caught_exception
+        return {'CANCELLED'}
 
     def hardened_execute(self, context):
         """Abstract method for the actual execute method. This will be called by the blender execute method. This method should be

@@ -5,17 +5,8 @@ from .. import HumanService
 from .. import LocationService
 from .. import ModifierService
 from .. import dynamic_import
-MPFB_OT_Load_Clothes_Operator = dynamic_import("mpfb.ui.loadclothes.operators", "MPFB_OT_Load_Clothes_Operator")
-
-
-class MockSelf:
-    filepath = ""
-
-    def report(self, reporttype, reportmessage):
-        rep = next(iter(reporttype))
-        print(str(rep) + " -- " + str(reportmessage))
-        if rep == 'ERROR':
-            raise ValueError(reportmessage)
+from ._helpers import MockOperatorBase
+MPFB_OT_Load_Clothes_Operator = dynamic_import("mpfb.ui.apply_assets.loadclothes.operators", "MPFB_OT_Load_Clothes_Operator")
 
 
 def test_operators_exist():
@@ -29,16 +20,16 @@ def test_load_clothes_without_rig():
     assert basemesh is not None
     assert ObjectService.object_is_basemesh(basemesh)
     ObjectService.activate_blender_object(basemesh)
-    LOAD_CLOTHES_PROPERTIES = dynamic_import("mpfb.ui.loadclothes.loadclothespanel", "LOAD_CLOTHES_PROPERTIES")
-    ASSET_SETTINGS_PROPERTIES = dynamic_import("mpfb.ui.assetlibrary.assetsettingspanel", "ASSET_SETTINGS_PROPERTIES")
+    LOAD_CLOTHES_PROPERTIES = dynamic_import("mpfb.ui.apply_assets.loadclothes.loadclothespanel", "LOAD_CLOTHES_PROPERTIES")
+    ASSET_SETTINGS_PROPERTIES = dynamic_import("mpfb.ui.apply_assets.assetlibrary.assetsettingspanel", "ASSET_SETTINGS_PROPERTIES")
     ASSET_SETTINGS_PROPERTIES.set_value("set_up_rigging", False, entity_reference=bpy.context.scene)
     ASSET_SETTINGS_PROPERTIES.set_value("delete_group", True, entity_reference=bpy.context.scene)
     ASSET_SETTINGS_PROPERTIES.set_value("specific_delete_group", True, entity_reference=bpy.context.scene)
     testdata = LocationService.get_mpfb_test("testdata")
     socks = os.path.join(testdata, "better_socks_low.mhclo")
-    mockself = MockSelf()
-    mockself.filepath = socks
+    mockself = MockOperatorBase(filepath=socks)
     MPFB_OT_Load_Clothes_Operator.execute(mockself, bpy.context)
+    mockself.mock_report.assert_no_errors()
     print(bpy.context.view_layer.objects.active)
     clothes = ObjectService.find_object_of_type_amongst_nearest_relatives(basemesh, "Clothes")
     assert clothes is not None, "Was able to find clothes"
@@ -56,14 +47,14 @@ def test_load_clothes_with_rig():
     HumanService.add_builtin_rig(basemesh, "default")
     rig = basemesh.parent
     ObjectService.activate_blender_object(rig)
-    LOAD_CLOTHES_PROPERTIES = dynamic_import("mpfb.ui.loadclothes.loadclothespanel", "LOAD_CLOTHES_PROPERTIES")
-    ASSET_SETTINGS_PROPERTIES = dynamic_import("mpfb.ui.assetlibrary.assetsettingspanel", "ASSET_SETTINGS_PROPERTIES")
+    LOAD_CLOTHES_PROPERTIES = dynamic_import("mpfb.ui.apply_assets.loadclothes.loadclothespanel", "LOAD_CLOTHES_PROPERTIES")
+    ASSET_SETTINGS_PROPERTIES = dynamic_import("mpfb.ui.apply_assets.assetlibrary.assetsettingspanel", "ASSET_SETTINGS_PROPERTIES")
     ASSET_SETTINGS_PROPERTIES.set_value("set_up_rigging", True, entity_reference=bpy.context.scene)
     testdata = LocationService.get_mpfb_test("testdata")
     socks = os.path.join(testdata, "better_socks_low.mhclo")
-    mockself = MockSelf()
-    mockself.filepath = socks
+    mockself = MockOperatorBase(filepath=socks)
     MPFB_OT_Load_Clothes_Operator.execute(mockself, bpy.context)
+    mockself.mock_report.assert_no_errors()
     print(bpy.context.view_layer.objects.active)
     clothes = ObjectService.find_object_of_type_amongst_nearest_relatives(basemesh, "Clothes")
     assert clothes is not None, "Was able to find clothes"

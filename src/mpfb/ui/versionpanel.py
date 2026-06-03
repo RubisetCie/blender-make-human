@@ -22,5 +22,4 @@ class MPFB_PT_Version_Panel(bpy.types.Panel):
         pyver = [sys.version_info[0], sys.version_info[1], sys.version_info[2]]
         layout.label(text="Python Version: %s" % str(pyver))
 
-
 ClassManager.add_class(MPFB_PT_Version_Panel)

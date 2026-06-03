@@ -3,14 +3,14 @@ from ....services import LogService
 from ....services import MaterialService
 from ....services import NodeService
 from .... import ClassManager
+from ...mpfboperator import MpfbOperator
 import bpy, json
 from bpy.types import StringProperty
 from bpy_extras.io_utils import ExportHelper
 
 _LOG = LogService.get_logger("savenodes.operators.savenodes")
 
-
-class MPFB_OT_Save_Nodes_Operator(bpy.types.Operator, ExportHelper):
+class MPFB_OT_Save_Nodes_Operator(MpfbOperator, ExportHelper):
     """Save node tree as json"""
     bl_idname = "mpfb.save_nodes"
     bl_label = "Save nodes"
@@ -18,13 +18,16 @@ class MPFB_OT_Save_Nodes_Operator(bpy.types.Operator, ExportHelper):
 
     filename_ext = '.json'
 
+    def get_logger(self):
+        return _LOG
+
     @classmethod
     def poll(self, context):
         if context.active_object is not None:
             return MaterialService.has_materials(context.active_object)
         return False
 
-    def execute(self, context):
+    def hardened_execute(self, context):
         _LOG.enter()
         _LOG.debug("click")
 
@@ -49,6 +52,5 @@ class MPFB_OT_Save_Nodes_Operator(bpy.types.Operator, ExportHelper):
             json.dump(as_dict, json_file, indent=4, sort_keys=True)
             self.report({'INFO'}, "JSON file written to " + absolute_file_path)
         return {'FINISHED'}
-
 
 ClassManager.add_class(MPFB_OT_Save_Nodes_Operator)

@@ -3,14 +3,14 @@ from ....services import LogService
 from ....services import MaterialService
 from ....services import NodeService
 from .... import ClassManager
+from ...mpfboperator import MpfbOperator
 import bpy, json
 from bpy.types import StringProperty
 from bpy_extras.io_utils import ImportHelper
 
 _LOG = LogService.get_logger("loadnodes.operators.loadnodes")
 
-
-class MPFB_OT_Load_Nodes_Operator(bpy.types.Operator, ImportHelper):
+class MPFB_OT_Load_Nodes_Operator(MpfbOperator, ImportHelper):
     """Load node tree from json"""
     bl_idname = "mpfb.load_nodes"
     bl_label = "Load nodes"
@@ -18,13 +18,16 @@ class MPFB_OT_Load_Nodes_Operator(bpy.types.Operator, ImportHelper):
 
     filename_ext = '.json'
 
+    def get_logger(self):
+        return _LOG
+
     @classmethod
     def poll(self, context):
         if context.active_object is not None:
             return not MaterialService.has_materials(context.active_object)
         return False
 
-    def execute(self, context):
+    def hardened_execute(self, context):
         _LOG.enter()
         _LOG.debug("click")
 
@@ -55,6 +58,5 @@ class MPFB_OT_Load_Nodes_Operator(bpy.types.Operator, ImportHelper):
         NodeService.apply_node_tree_from_dict(material.node_tree, as_dict, True)
 
         return {'FINISHED'}
-
 
 ClassManager.add_class(MPFB_OT_Load_Nodes_Operator)

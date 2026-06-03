@@ -228,7 +228,33 @@ class HumanService:
     def _populate_human_info_with_basemesh_info(human_info, basemesh):
         _LOG.enter()
         human_info["phenotype"] = TargetService.get_macro_info_dict_from_basemesh(basemesh)
-        human_info["targets"] = TargetService.get_target_stack(basemesh, exclude_starts_with="$md-")
+        human_info["targets"] = TargetService.get_target_stack(basemesh, exclude_starts_with=("$md-", "!ex-"))
+
+    @staticmethod
+    def _populate_human_info_with_expression_info(human_info, basemesh):
+        """Write the applied-expressions stack into ``human_info["expressions"]``.
+
+        Source of truth is ``basemesh[APPLIED_EXPRESSIONS_PROP]`` (a JSON-encoded string).
+        Output is a list of ``{"asset": ..., "weight": ...}`` entries sorted by ``asset`` for
+        deterministic JSON output. Empty list when the property is absent.
+        """
+        _LOG.enter()
+        from .faceservice import FaceService  # pylint: disable=C0415
+        stack = FaceService._read_applied_expressions(basemesh)  # pylint: disable=W0212
+        normalized = []
+        for row in stack:
+            if not isinstance(row, dict):
+                continue
+            asset = row.get("asset")
+            if not asset:
+                continue
+            try:
+                weight = float(row.get("weight", 1.0))
+            except (TypeError, ValueError):
+                continue
+            normalized.append({"asset": str(asset), "weight": weight})
+        normalized.sort(key=lambda r: r["asset"])
+        human_info["expressions"] = normalized
 
     @staticmethod
     def _populate_human_info_with_rig_info(human_info, basemesh):
@@ -239,8 +265,12 @@ class HumanService:
             if rig_type is None or rig_type in ("unknown", "unkown"):
                 raise ValueError("Could not identify rig type. Custom rigs cannot be serialized.")
             if rig_type.startswith("rigify_generated"):
-                _LOG.warn("Generated rigify should probably not be serialized. If you want to serialize the rig you should do it before generating the final rig.")
-                rig_type = "rigify.human_toes"
+                inferred = RigService.infer_metarig_type_from_generated(armature_object)
+                if inferred is not None:
+                    rig_type = inferred
+                else:
+                    _LOG.warn("Generated rigify rig signature not recognised; falling back to rigify.human_toes")
+                    rig_type = "rigify.human_toes"
             human_info["rig"] = rig_type
 
     @staticmethod
@@ -344,6 +374,7 @@ class HumanService:
         human_info["eyes_material_type"] = "MAKESKIN"
         human_info["skin_material_settings"] = dict()
         human_info["eyes_material_settings"] = dict()
+        human_info["expressions"] = []
         return human_info
 
     @staticmethod
@@ -374,6 +405,7 @@ class HumanService:
         HumanService._populate_human_info_with_basemesh_info(human_info, basemesh)
         HumanService._populate_human_info_with_rig_info(human_info, basemesh)
         HumanService._populate_human_info_with_bodyparts_info(human_info, basemesh)
+        HumanService._populate_human_info_with_expression_info(human_info, basemesh)
         HumanService._populate_human_info_with_clothes_info(human_info, basemesh)
         HumanService._populate_human_info_with_proxy_info(human_info, basemesh)
         HumanService._populate_human_info_with_skin_info(human_info, basemesh)
@@ -488,11 +520,6 @@ class HumanService:
         GeneralObjectProperties.set_value("object_type", atype, entity_reference=clothes)
 
         bpy.ops.object.shade_smooth()
-        if SystemService.is_blender_version_at_least([5,1,0]):
-            # Try to handle bug in blender 5.1 normals calculation
-            bpy.ops.object.mode_set(mode='EDIT', toggle=False)
-            bpy.context.view_layer.update()
-            bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
 
         name = basemesh.name
 
@@ -928,6 +955,71 @@ class HumanService:
         profiler.leave("_load_targets")
 
     @staticmethod
+    def _apply_expressions_from_human_info(human_info, basemesh):
+        """Apply the ``expressions`` field from a human preset to the basemesh.
+
+        Behaviour:
+        - If the preset has no ``expressions`` key, this is a no-op (backwards compat).
+        - The decoded list is always stored on the basemesh as ``mpfb_applied_expressions``
+          (sorted by ``asset``, JSON-encoded). This preserves intent on re-save even if the
+          ``faceunits01`` pack is not installed on this machine.
+        - If ``faceunits01`` is installed, the stack is aggregated and applied via a single
+          ``clear_expression`` + ``set_expression`` pass. Otherwise a warning is logged and
+          no shape-key values are written (no ``!ex-*`` keys exist anyway).
+        """
+        _LOG.enter()
+        from .faceservice import FaceService, APPLIED_EXPRESSIONS_PROP  # pylint: disable=C0415
+        entries = human_info.get("expressions", None)
+        if entries is None:
+            return
+        if not isinstance(entries, list):
+            _LOG.warn("expressions field is not a list, ignoring", entries)
+            return
+
+        normalized = []
+        for row in entries:
+            if not isinstance(row, dict):
+                continue
+            asset = row.get("asset")
+            if not asset:
+                continue
+            try:
+                weight = float(row.get("weight", 1.0))
+            except (TypeError, ValueError):
+                continue
+            normalized.append({"asset": str(asset), "weight": weight})
+        normalized.sort(key=lambda r: r["asset"])
+        basemesh[APPLIED_EXPRESSIONS_PROP] = json.dumps(normalized)
+
+        # Sync the expressions-library panel sliders with the loaded stack regardless of
+        # whether faceunits01 is installed — the stack itself was preserved verbatim, so the
+        # sliders should reflect that intent.
+        try:
+            import bpy as _bpy  # pylint: disable=C0415
+            from ..ui.apply_assets.useexpression import write_slider_values  # pylint: disable=C0415
+            scene = _bpy.context.scene if _bpy.context else None
+            if scene is not None:
+                write_slider_values(scene, normalized)
+        except Exception as exc:  # pylint: disable=W0703
+            _LOG.trace("Could not sync expressions-library sliders", exc)
+
+        if not normalized:
+            return
+
+        if not FaceService.is_faceunits01_installed():
+            _LOG.warn(
+                "Preset contains expressions but the faceunits01 asset pack is not installed; "
+                "stack stored verbatim, no shape keys applied",
+                normalized,
+            )
+            return
+
+        aggregated = FaceService.aggregate_expression_stack(normalized)
+        FaceService.clear_expression(basemesh)
+        if aggregated:
+            FaceService.set_expression(basemesh, aggregated)
+
+    @staticmethod
     def deserialize_from_dict(human_info, deserialization_settings):
         """
         Deserializes a human character from a dictionary of human information and deserialization settings.
@@ -1019,6 +1111,7 @@ class HumanService:
 
         HumanService._check_add_rig(human_info, basemesh)
         HumanService._check_add_bodyparts(human_info, basemesh, subdiv_levels=subdiv_levels, material_model=override_clothes_model, eyes_material_model=override_eyes_model)
+        HumanService._apply_expressions_from_human_info(human_info, basemesh)
         if "proxy" in human_info:
             _LOG.debug("Proxy found, adding to basemesh", human_info["proxy"])
         HumanService._check_add_proxy(human_info, basemesh, subdiv_levels=subdiv_levels)
@@ -1566,12 +1659,15 @@ class HumanService:
         return armature_object
 
     @staticmethod
-    def refit(blender_object):
+    def refit(blender_object, *, operator=None):
         """
         Refits the given blender object, adjusting its basemesh and rig, and refitting any related mesh assets.
 
         Args:
             blender_object (bpy.types.Object): The Blender object to be refitted.
+            operator (bpy.types.Operator, optional): The operator calling this function, used for
+                reporting actionable errors (e.g. when the rig is a generated rigify rig with no
+                meta rig in the scene). Default is None.
 
         Raises:
             ValueError: If the basemesh cannot be found as a relative of the given object.
@@ -1594,7 +1690,18 @@ class HumanService:
             ClothesService.fit_clothes_to_human(child, basemesh, set_parent=False)
 
         if rig:
-            RigService.refit_existing_armature(rig, basemesh)
+            try:
+                RigService.refit_existing_armature(rig, basemesh)
+            except ValueError as exc:
+                if "generated rigify" in str(exc).lower():
+                    message = ("Cannot refit: the rig is a generated rigify rig and no meta rig is "
+                               "present in the scene. Set 'Meta-rig:' to Keep or Hide on the rigify "
+                               "sub-panel before generating to allow refitting on the next generate.")
+                    _LOG.warn(message)
+                    if operator is not None:
+                        operator.report({'ERROR'}, message)
+                    return
+                raise
 
             subrigs = []
 

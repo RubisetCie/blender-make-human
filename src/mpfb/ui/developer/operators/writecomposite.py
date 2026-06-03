@@ -8,11 +8,11 @@ from ....entities.nodemodel.v2.composites import *
 from .... import ClassManager
 from ...developer.developerpanel import DEVELOPER_PROPERTIES
 from .rewritenodetypes import shorten_name, round_floats
+from ...mpfboperator import MpfbOperator
 import bpy, os, json, pprint
 from string import Template
 
 _LOG = LogService.get_logger("developer.operators.writecomposite")
-
 
 def _identify_socket(all_sockets, socket):
     name_count = 0
@@ -22,7 +22,6 @@ def _identify_socket(all_sockets, socket):
     if name_count < 2:
         return socket.name
     return socket.identifier
-
 
 def _build_tree_def(node_tree):
     wrappers = dict(PRIMITIVE_NODE_WRAPPERS)
@@ -78,12 +77,14 @@ def _build_tree_def(node_tree):
 
     return round_floats(tree_def)
 
-
-class MPFB_OT_Write_Composite_Operator(bpy.types.Operator):
+class MPFB_OT_Write_Composite_Operator(MpfbOperator):
     """Generate the code representing a selected node group to the composite directory"""
     bl_idname = "mpfb.write_composite"
     bl_label = "Write composite"
     bl_options = {'REGISTER'}
+
+    def get_logger(self):
+        return _LOG
 
     @classmethod
     def poll(self, context):
@@ -105,12 +106,11 @@ class MPFB_OT_Write_Composite_Operator(bpy.types.Operator):
 
         return False
 
-    def execute(self, context):
+    def hardened_execute(self, context):
         _LOG.enter()
 
         group = None
         selected = context.selected_nodes
-        scene = context.scene
 
         if len(selected) > 1:
             self.report({'ERROR'}, "More than one node selected")
@@ -251,6 +251,5 @@ class MPFB_OT_Write_Composite_Operator(bpy.types.Operator):
             pyfile.write("    NodeService.destroy_node_tree(node_tree)\n")
 
         return {'FINISHED'}
-
 
 ClassManager.add_class(MPFB_OT_Write_Composite_Operator)
