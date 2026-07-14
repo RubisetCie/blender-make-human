@@ -27,12 +27,13 @@ It also exposes a few important functions and objects:
 - get_preference(): Return a preference key from the MPFB preference panel
 - VERSION: A tuple representing the version of MPFB
 - BUILD_INFO: Build information of MPFB. It defaults to "FROM_SOURCE" if not a build, otherwise it contains the build date
+- DEBUG: A boolean indicating whether debug mode is enabled. If DEBUG is True, some early initialization info is printed to the console
 - MPFB_CONTEXTUAL_INFORMATION: A dictionary containing contextual information of the addon, such as in which package it was loaded
 - ClassManager: A singleton object that manages the registration and unregistering of classes such as panels and operators
 """
 
 # These are constants that can be imported from submodules
-VERSION = (2, 0, 13)
+VERSION = (2, 0, 17)
 BUILD_INFO = "FROM_SOURCE"
 
 # WARNING!!!
@@ -164,4 +165,4 @@ def unregister():
     ClassManager.unregister_classes()
 
 
-__all__ = ["VERSION", "BUILD_INFO", "ClassManager", "MPFB_CONTEXTUAL_INFORMATION"]
+__all__ = ["VERSION", "DEBUG", "BUILD_INFO", "ClassManager", "MPFB_CONTEXTUAL_INFORMATION"]
