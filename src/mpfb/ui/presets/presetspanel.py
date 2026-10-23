@@ -5,6 +5,7 @@ from ..abstractpanel import Abstract_Panel
 class MPFB_PT_Presets_Panel(Abstract_Panel):
     bl_label = "Manage Saves"
     bl_category = UiService.get_value("MATERIALSCATEGORY")
+    bl_order = 50
 
     def draw(self, context):
         layout = self.layout

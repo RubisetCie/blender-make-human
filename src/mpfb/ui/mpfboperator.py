@@ -51,7 +51,7 @@ class MpfbOperator(bpy.types.Operator):
         out = out + "\nOPERATOR\n"
         out = out + "--------\n"
         out = out + "name ................. : %s\n" % str(self.bl_idname)
-        out = out + "label...... .......... : %s\n" % str(self.bl_label)
+        out = out + "label ................ : %s\n" % str(self.bl_label)
 
         out = out + "\nSYSTEM\n"
         out = out + "------\n"
@@ -59,8 +59,8 @@ class MpfbOperator(bpy.types.Operator):
         out = out + "blender_version_string : %s\n" % str(bpy.app.version_string)
         out = out + "python_version ....... : %s\n" % str(sys.version)
         out = out + "platform ............. : %s\n" % str(platform.platform())
-        out = out + "platform system....... : %s\n" % str(platform.system())
-        out = out + "platform release...... : %s\n" % str(platform.release())
+        out = out + "platform system ...... : %s\n" % str(platform.system())
+        out = out + "platform release ..... : %s\n" % str(platform.release())
 
         out = out + "\nMPFB\n"
         out = out + "----\n"

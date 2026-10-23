@@ -35,7 +35,8 @@ class ObjectService:
     Note that most logic related to vertex groups and meshes are located in the MeshService class, rather then in ObjectService.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """You should not instance ObjectService. Use its static methods instead."""
         raise RuntimeError("You should not instance ObjectService. Use its static methods instead.")
 
     @staticmethod
@@ -436,7 +437,8 @@ class ObjectService:
         if not blender_object or not mpfb_type_name:
             return
 
-        def rec_children(rec_parent, exclude=None):
+        def rec_children(rec_parent: bpy.types.Object,
+                         exclude: bpy.types.Object | None = None) -> typing.Generator[bpy.types.Object, None, None]:
             if only_parents:
                 return
 
@@ -475,7 +477,7 @@ class ObjectService:
             strict_parent = True
 
     @staticmethod
-    def find_related_objects(blender_object: bpy.types.Object | None, **kwargs) -> typing.Generator[bpy.types.Object, None, None]:
+    def find_related_objects(blender_object: bpy.types.Object | None, **kwargs: bool) -> typing.Generator[bpy.types.Object, None, None]:
         """
         Find related objects of any type among the nearest relatives of the given object.
 
@@ -490,7 +492,7 @@ class ObjectService:
             blender_object, _ALL_TYPES, **kwargs)
 
     @staticmethod
-    def find_related_skeletons(blender_object: bpy.types.Object | None, **kwargs) -> typing.Generator[bpy.types.Object, None, None]:
+    def find_related_skeletons(blender_object: bpy.types.Object | None, **kwargs: bool) -> typing.Generator[bpy.types.Object, None, None]:
         """
         Find related skeleton objects among the nearest relatives of the given object.
 
@@ -505,7 +507,7 @@ class ObjectService:
             blender_object, _SKELETON_TYPES, **kwargs)
 
     @staticmethod
-    def find_related_mesh_base_or_assets(blender_object: bpy.types.Object | None, **kwargs) -> typing.Generator[bpy.types.Object, None, None]:
+    def find_related_mesh_base_or_assets(blender_object: bpy.types.Object | None, **kwargs: bool) -> typing.Generator[bpy.types.Object, None, None]:
         """
         Find related mesh base or asset objects among the nearest relatives of the given object.
 
@@ -520,7 +522,7 @@ class ObjectService:
             blender_object, _MESH_TYPES, **kwargs)
 
     @staticmethod
-    def find_related_mesh_assets(blender_object: bpy.types.Object | None, **kwargs) -> typing.Generator[bpy.types.Object, None, None]:
+    def find_related_mesh_assets(blender_object: bpy.types.Object | None, **kwargs: bool) -> typing.Generator[bpy.types.Object, None, None]:
         """
         Find related mesh asset objects among the nearest relatives of the given object.
 
@@ -535,7 +537,7 @@ class ObjectService:
             blender_object, _MESH_ASSET_TYPES, **kwargs)
 
     @staticmethod
-    def find_related_body_part_assets(blender_object: bpy.types.Object | None, **kwargs) -> typing.Generator[bpy.types.Object, None, None]:
+    def find_related_body_part_assets(blender_object: bpy.types.Object | None, **kwargs: bool) -> typing.Generator[bpy.types.Object, None, None]:
         """
         Find related body part asset objects among the nearest relatives of the given object.
 
@@ -585,6 +587,39 @@ class ObjectService:
         return blender_object and blender_object.type == "ARMATURE" and typing.cast(bpy.types.ID, blender_object.data).get("rig_id")
 
     @staticmethod
+    def _get_rigify_property(rna_owner: typing.Any, property_name: str, default: typing.Any = None) -> typing.Any:
+        """
+        Read a Rigify property from an RNA owner, such as an armature or a bone collection.
+
+        Rigify registers most of its properties as RNA properties on the relevant Blender types
+        (for example bpy.types.Armature.rigify_target_rig), which means they are not reachable via
+        the ID-property lookup "owner[property_name]". A few properties, such as rig_id, are
+        genuine ID-properties instead. Older and modified Rigify installations may also differ in
+        which of the two mechanisms they use. This method therefore checks the RNA property first
+        and falls back to the ID-property.
+
+        Args:
+            rna_owner: The armature data, bone collection or similar owner to read the property from.
+            property_name: The name of the Rigify property.
+            default: The value to return when the property could not be found. Defaults to None.
+
+        Returns:
+            The value of the property, or default when neither an RNA nor an ID-property was found.
+        """
+        if rna_owner is None:
+            return default
+
+        value = getattr(rna_owner, property_name, None)
+
+        if value is not None:
+            return value
+
+        try:
+            return rna_owner.get(property_name, default)
+        except (AttributeError, TypeError):
+            return default
+
+    @staticmethod
     def object_is_rigify_metarig(blender_object: bpy.types.Object | None, *, check_bones: bool = False) -> bool:
         """
         Check if the given Blender object is a Rigify metarig.
@@ -601,9 +636,11 @@ class ObjectService:
 
         armature_data = typing.cast(bpy.types.Armature, blender_object.data)
 
-        if (armature_data.get("rigify_target_rig") or
-                armature_data.get("rigify_colors") and len(typing.cast(typing.Any, armature_data).rigify_colors) > 0 or
-                any(bcoll.get("rigify_ui_row", 0) > 0 for bcoll in armature_data.collections)):
+        rigify_colors = ObjectService._get_rigify_property(armature_data, "rigify_colors")
+
+        if (ObjectService._get_rigify_property(armature_data, "rigify_target_rig") or
+                rigify_colors and len(rigify_colors) > 0 or
+                any(ObjectService._get_rigify_property(bcoll, "rigify_ui_row", 0) > 0 for bcoll in armature_data.collections)):
             return True
 
         if check_bones:
@@ -628,7 +665,9 @@ class ObjectService:
             return None
 
         for obj in bpy.data.objects:
-            if obj.type == "ARMATURE" and typing.cast(bpy.types.Armature, obj.data).get("rigify_target_rig") == blender_object:
+            if obj.type != "ARMATURE":
+                continue
+            if ObjectService._get_rigify_property(obj.data, "rigify_target_rig") == blender_object:
                 return obj
         return None
 
@@ -646,12 +685,12 @@ class ObjectService:
         if not blender_object or blender_object.type != "ARMATURE" or typing.cast(bpy.types.Armature, blender_object.data).get("rig_id"):
             return None
 
-        return typing.cast(bpy.types.Armature, blender_object.data).get("rigify_target_rig", None)
+        return ObjectService._get_rigify_property(blender_object.data, "rigify_target_rig")
 
     @staticmethod
     def find_armature_context_objects(
-            armature_object: bpy.types.Object | None, *, operator=None,
-            is_subrig: bool | None=None, only_basemesh=False,
+            armature_object: bpy.types.Object | None, *, operator: bpy.types.Operator | None=None,
+            is_subrig: bool | None=None, only_basemesh: bool=False,
             ) -> tuple[bpy.types.Object | None, bpy.types.Object | None, bpy.types.Object | None]:
         """
         Find base rig, basemesh, and directly controlled mesh (same as basemesh unless subrig) for the given rig.
@@ -879,7 +918,9 @@ class ObjectService:
             from .targetservice import TargetService
             key_name = "temporary_lowest_point_key." + str(random.randrange(1000, 9999))
             shape_key = TargetService.create_shape_key(basemesh, key_name, also_create_basis=True, create_from_mix=True)
-            vertex_data = shape_key.data
+            # ShapeKey.data is declared bpy_prop_collection[UnknownType], so its points have no .co
+            # as far as the checker is concerned.
+            vertex_data = typing.cast("bpy.types.bpy_prop_collection[bpy.types.ShapeKeyPoint]", shape_key.data)
 
         index = 0
         for vertex in vertex_data:

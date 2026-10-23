@@ -9,6 +9,7 @@ from ... import BUILD_INFO, VERSION
 class MPFB_PT_System_Panel(Abstract_Panel):
     bl_label = "System & Resources"
     bl_category = UiService.get_value("DEVELOPERCATEGORY")
+    bl_order = 100
 
     def _system_info(self, context, scene, layout):
         box = self._create_box(layout, "System information", "TOOL_SETTINGS")

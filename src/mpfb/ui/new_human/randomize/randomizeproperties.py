@@ -59,7 +59,7 @@ _SCALAR_ATTRIBUTES: list[str] = [name for _group, attributes in _ATTRIBUTE_GROUP
 
 # The attributes with a discrete mode, mapped to the label shown for each of their values. In
 # discrete mode the panel shows one "Allow value" checkbox per value instead of the
-# neutral/deviation sliders. The value names and their order come from RandomizationService 
+# neutral/deviation sliders. The value names and their order come from RandomizationService
 # so they cannot drift out of sync with the sampling code.
 _DISCRETE_LABELS: dict[str, dict[str, str]] = {
     "gender": {"female": "Female", "male": "Male"},
@@ -264,6 +264,10 @@ for _slot in _CLOTHES_SLOTS:
 # and per-slot properties above. There are 21 sections, so this is roughly a hundred properties.
 # The per-section defaults come from RandomizationService, so they cannot drift out of sync.
 _DETAIL_DEFAULT: dict = RandomizationService.get_default_detail_spec(DETAIL_SECTIONS)
+
+# What a section absent from a loaded preset is restored to. See spec_to_scene: a section the
+# preset predates is left picking nothing, so loading it gives back the same character it used to.
+_DETAIL_ABSENT: dict = {"min": 0, "max": 0, "include": "", "exclude": "", "deviation": 0.0}
 
 for _section_name in DETAIL_SECTIONS:
     _detail_default = _DETAIL_DEFAULT["sections"][_section_name]
@@ -650,7 +654,12 @@ def spec_to_scene(spec: dict, scene: "bpy.types.Scene") -> None:
     RANDOMIZE_PROPERTIES.set_value("details_symmetry", details["symmetry"], entity_reference=scene)
     detail_sections = details["sections"]
     for section_name in DETAIL_SECTIONS:
-        section_cfg = detail_sections[section_name]
+        # A preset written before a target.json section existed does not carry it, the same way
+        # older presets do not carry the grid origin below. Such a section is not one the user
+        # set to some middle value, it is one they never saw, so it is restored neutral rather
+        # than at the global default: min = max = 0 picks nothing, which reproduces exactly the
+        # draw the preset gave before the section was added.
+        section_cfg = detail_sections.get(section_name, _DETAIL_ABSENT)
         prefix = "detail_" + section_name + "_"
         RANDOMIZE_PROPERTIES.set_value(prefix + "min", section_cfg["min"], entity_reference=scene)
         RANDOMIZE_PROPERTIES.set_value(prefix + "max", section_cfg["max"], entity_reference=scene)
